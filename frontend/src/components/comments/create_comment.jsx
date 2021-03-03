@@ -1,9 +1,4 @@
-// still need to:
-// 1) delete comment
-// 2) 
-
 import React from 'react';
-import { withRouter } from 'react-router-dom';
 
 class CreateComment extends React.Component {
     constructor(props) {
@@ -26,7 +21,6 @@ class CreateComment extends React.Component {
         }
     }
 
-
     handleSubmit(e) {
         e.preventDefault();
         let comment = {
@@ -42,9 +36,9 @@ class CreateComment extends React.Component {
             }));
     }
 
-    componentWillUnmount() {
-        this.props.clearErrors([])
-    }
+    // componentWillUnmount() {
+    //     this.props.clearErrors([])
+    // }
 
     // renderErrors(){
     //     return (
@@ -62,7 +56,7 @@ class CreateComment extends React.Component {
     render() {
 
         return (
-                <form>
+            <form onSubmit={this.handleSubmit}>
                     <div className='create-comment-subcontainer'>
 
                             <input 
@@ -78,7 +72,7 @@ class CreateComment extends React.Component {
                             {this.renderErrors()}
                         </div> */}
 
-                            <img className="create-comment-submit-btn" onClick={this.handleSubmit} src="https://i.ibb.co/th9QxJw/comment-submit.png" />
+                            <img className="create-comment-submit-btn" alt="submit-comment-btn" onClick={this.handleSubmit} src="https://i.ibb.co/th9QxJw/comment-submit.png" />
                     </div>
                 </form>
         )

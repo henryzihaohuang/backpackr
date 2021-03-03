@@ -2,15 +2,17 @@
 .trip-chat-container{
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     height:80vh;
-    width:62vh;
+    width:66vh;
     margin-top:100px;
     display: fixed;
     padding:16px;
+
 }
 
 .comments-subcontainer{
     height:68vh;
     overflow: auto;
+
 
     // overflow-anchor:none;
 }
@@ -19,10 +21,10 @@
   display: none;
 }
 
-.comments-subcontainer-anchor{
-
-    overflow-anchor:bottom;
-    height:1px;
+.comments-wrapper { 
+    display: flex;
+    flex-direction: column-reverse;
+    overflow: auto;
 }
 
 .create-comment-container{
@@ -65,11 +67,16 @@
 
 //message bubble shape
 
+.comment-list {
+    display: flex;
+    margin-bottom: 10px;
+}
+
 .message-bubble-1{
     background: #ace3e0;
     border-radius: 30px;
     padding:10px;
-    margin-left:259px;
+    margin-left:289px;
 
     width: 270px;
 
@@ -84,13 +91,13 @@
 }
 
 .message-bubble-1:before {
-  content: "";
-  position: absolute;
-  top:100%;
-  left:72%;
-  border-top: 22px solid #ace3e0;
-  border-left: 20px solid transparent;
-  border-right: 20px solid transparent;
+    content: "";
+    position: absolute;
+    top:100%;
+    left:68%;
+    border-top: 22px solid #ace3e0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
 }
 
 .message-bubble-2{
@@ -111,13 +118,13 @@
 }
 
 .message-bubble-2:before {
-  content: "";
-  position: absolute;
-  top:100%;
-  left:14%;
-  border-top: 22px solid white;
-  border-left: 20px solid transparent;
-  border-right: 20px solid transparent;
+    content: "";
+    position: absolute;
+    top:100%;
+    left:16%;
+    border-top: 22px solid white;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
 }
 
 //comment message text

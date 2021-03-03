@@ -4,7 +4,6 @@ const validText = require("./valid-text");
 module.exports = function validateTripInput(data){
 
     let errors = {};
-
     data.destination = validText(data.destination) ? data.destination : "";
     data.tripName = validText(data.tripName) ? data.tripName : "";
 
@@ -13,7 +12,6 @@ module.exports = function validateTripInput(data){
 
     if (Validator.isEmpty(data.tripName))
         errors.tripName = "You need to give your trip a name";
-
     return {
         errors,
         isValid: Object.keys(errors).length === 0

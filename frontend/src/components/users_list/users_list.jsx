@@ -1,5 +1,4 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import React from 'react';
 
 class UsersList extends React.Component{
     constructor(props){
@@ -15,13 +14,15 @@ class UsersList extends React.Component{
 
     addFriend(e){
         e.preventDefault()
-        let user = {
-            email: this.state.email,
-            tripId: this.props.tripId
+        if (this.state.email !== '') {
+            let user = {
+                email: this.state.email,
+                tripId: this.props.tripId
+            }
+    
+            this.props.addUserToTrip(user)
+                .then(this.setState({email: ''}))
         }
-
-        this.props.addUserToTrip(user)
-            .then(this.setState({email: ''}))
     }
 
     removeFriend(userId){
@@ -63,7 +64,7 @@ class UsersList extends React.Component{
 
 
     render(){
-
+        let users = Object.values(this.props.newusers)
         return(
             <div className="userslist-container">
                 <div className="userslist-users-container">
@@ -72,7 +73,7 @@ class UsersList extends React.Component{
                     </header>
                     
                     <ul className='trip-users-list'>
-                        {this.tripUsers(this.props.users)}
+                        {this.tripUsers(users)}
                     </ul>
                 </div>
 

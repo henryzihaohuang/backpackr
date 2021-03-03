@@ -17,6 +17,7 @@ class EditTrip extends React.Component {
             return(
                 <EditTripForm trip={props.trip}
                     formType={props.formType}
+                    fetchATrip={props.fetchATrip}
                     updateTrip={props.updateTrip}
                     clearErrors={props.clearErrors}
                 />
@@ -29,7 +30,7 @@ class EditTrip extends React.Component {
 
 const mSTP = (state, ownProps) => {
     return {
-        trip: state.trips.trip[ownProps.match.params.tripId],
+        trip: state.trips.user[ownProps.match.params.tripId],
         errors: state.errors.trip,
         formType: 'Update your Trip!'
     }

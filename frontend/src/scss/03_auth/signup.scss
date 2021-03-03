@@ -19,6 +19,7 @@
 }
 
 .signup-form-subcontainer{
+    margin-top: 60px;
     margin-bottom:100px;
     border:1px solid white;
     padding: 88px;
@@ -47,6 +48,7 @@
 .signup-form-input-element:focus{
     outline:none;
     background-color:lightgrey;
+    color: $dark;
 }
 
 ::placeholder{

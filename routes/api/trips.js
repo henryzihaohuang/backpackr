@@ -8,12 +8,14 @@ const Trip = require("../../models/Trip");
 const Comment = require("../../models/Comment");
 const User = require("../../models/User");
 const ItineraryItem = require("../../models/ItineraryItem");
+const FlightItineraryItem = require("../../models/FlightItineraryItem");
+const LodgingItineraryItem = require("../../models/LodgingItineraryItem");
+const FoodItineraryItem = require("../../models/FoodItineraryItem");
 
 const ValidateTripInput = require("../../validation/trip");
 const ValidateCommentInput = require("../../validation/comment");
 const validateItineraryItemInput = require("../../validation/itineraryItem");
 const validText = require("../../validation/valid-text");
-const itineraryItem = require("../../validation/itineraryItem");
 
 
 // Get the trips for a specific user.
@@ -55,6 +57,18 @@ router.get("/:id",
                 path: "itineraryItems",
                 model: "ItineraryItem"
             })
+            .populate({
+                path: "flightItineraryItems",
+                model: "FlightItineraryItem"
+            })
+            .populate({
+                path: "lodgingItineraryItems",
+                model: "LodgingItineraryItem"
+            })
+            .populate({
+                path: "foodItineraryItems",
+                model: "FoodItineraryItem"
+            })
             .then(trip => {
 
                 // Check if the current user is part of the trip.
@@ -75,11 +89,9 @@ router.post("/",
     passport.authenticate("jwt", { session: false }),
     (req, res) => {
         const { errors, isValid } = ValidateTripInput(req.body);
-
         if (!isValid) {
             return res.status(400).json(errors);
         }
-
         const newTrip = new Trip({
             users: [req.user],
             destination: req.body.destination,
@@ -100,20 +112,40 @@ router.patch("/:id",
     passport.authenticate("jwt", { session: false }),
     (req, res) => {
         const { errors, isValid } = ValidateTripInput(req.body);
-
         if (!isValid) {
             return res.status(400).json(errors);
         }
 
-        const newTripData = {
-            destination: req.body.destination,
-            tripName: req.body.tripName,
-            comments: req.body.comments,
-            itineraryItems: req.body.itineraryItems
-        };
-
-        Trip.findByIdAndUpdate(req.params.id, newTripData, { new: true, upsert: true })
-            .then(trip => res.json({ [trip.id]: trip }))
+        Trip.findByIdAndUpdate(req.body._id, req.body, { new: true, upsert: true })
+            // .then(Trip.findById(req.params.id)
+            //     .populate({
+            //         path: "users",
+            //         model: "User",
+            //         select: ["username", "_id"]
+            //     })
+            //     .populate({
+            //         path: "comments",
+            //         model: "Comment",
+            //         select: ["author", "comment", "date"]
+            //     })
+            //     .populate({
+            //         path: "itineraryItems",
+            //         model: "ItineraryItem"
+            //     })
+            //     .populate({
+            //         path: "flightItineraryItems",
+            //         model: "FlightItineraryItem"
+            //     })
+            //     .populate({
+            //         path: "lodgingItineraryItems",
+            //         model: "LodgingItineraryItem"
+            //     })
+            //     .populate({
+            //         path: "foodItineraryItems",
+            //         model: "FoodItineraryItem"
+            //     }))
+            .then(trip => res.json({ [trip._id]: trip }))
+            // .then(trip => res.json({}))
             .catch(err => {
                 return res.status(404).json({ notripfound: "There was a problem updating the route." })
             });
@@ -245,13 +277,192 @@ router.delete("/itineraryItems/:id",
         });
     });
 
+//add a flight itinerary item
+router.post("/:trip_id/flightItineraryItem",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        Trip.findById(req.params.trip_id).then(trip => {
+            // Check that the current user is part of this trip.
+            if (trip.users.includes(req.user.id)) {
+                const { errors, isValid } = validateItineraryItemInput(req.body);
+
+                if (!isValid) {
+                    return res.status(400).json(errors);
+                }
+
+                const newflightItineraryItem = new FlightItineraryItem({
+                    trip: trip.id,
+                    itemName: req.body.itemName,
+                    category: req.body.category,
+                    address: req.body.address,
+                    description: req.body.description,
+                });
+
+                newflightItineraryItem.save().then(FlightItineraryItem => {
+                    trip.flightItineraryItems.push(FlightItineraryItem.id);
+                    trip.save().then(() => res.json(FlightItineraryItem));
+                });
+            } else {
+                return res.status(401).json("Not the owner");
+            }
+        });
+    });
+
+// Delete a flight itineraryItem, and remove it from a trip.
+router.delete("/flightItineraryItems/:id",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        FlightItineraryItem.findById(req.params.id)
+            .populate({ // Populate the trip to remove the itinerary item from it before deleteing it.
+                path: "trip",
+                model: "Trip",
+                select: ["flightItineraryItems", "users"]
+            })
+            .then(flightItineraryItem => {
+                // Check that the current user is part of the trip that is parent if this itinerary item.
+                if (flightItineraryItem.trip.users.includes(req.user.id)) {
+
+                    const trip = flightItineraryItem.trip;
+                    trip.flightItineraryItems.pull({ _id: flightItineraryItem.id })
+                    trip.save().then(() => {
+                        flightItineraryItem.remove().then(() => res.json(flightItineraryItem));
+                    });
+
+                } else {
+
+                    return res.status(401).json("Not the owner");
+                }
+            });
+    });
+
+//add a lodging itinerary item
+router.post("/:trip_id/lodgingItineraryItem",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        Trip.findById(req.params.trip_id).then(trip => {
+            // Check that the current user is part of this trip.
+            if (trip.users.includes(req.user.id)) {
+                const { errors, isValid } = validateItineraryItemInput(req.body);
+
+                if (!isValid) {
+                    return res.status(400).json(errors);
+                }
+
+                const newlodgingItineraryItem = new LodgingItineraryItem({
+                    trip: trip.id,
+                    itemName: req.body.itemName,
+                    category: req.body.category,
+                    address: req.body.address,
+                    description: req.body.description,
+                });
+
+                newlodgingItineraryItem.save().then(LodgingItineraryItem => {
+                    trip.lodgingItineraryItems.push(LodgingItineraryItem.id);
+                    trip.save().then(() => res.json(LodgingItineraryItem));
+                });
+            } else {
+                return res.status(401).json("Not the owner");
+            }
+        });
+    });
+
+// Delete a lodging itineraryItem, and remove it from a trip.
+router.delete("/lodgingItineraryItems/:id",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        LodgingItineraryItem.findById(req.params.id)
+            .populate({ // Populate the trip to remove the itinerary item from it before deleteing it.
+                path: "trip",
+                model: "Trip",
+                select: ["lodgingItineraryItems", "users"]
+            })
+            .then(lodgingItineraryItem => {
+                // Check that the current user is part of the trip that is parent if this itinerary item.
+                if (lodgingItineraryItem.trip.users.includes(req.user.id)) {
+
+                    const trip = lodgingItineraryItem.trip;
+                    trip.lodgingItineraryItems.pull({ _id: lodgingItineraryItem.id })
+                    trip.save().then(() => {
+                        lodgingItineraryItem.remove().then(() => res.json(lodgingItineraryItem));
+                    });
+
+                } else {
+                    return res.status(401).json("Not the owner");
+                }
+            });
+    });
+
+//add a food itinerary item
+router.post("/:trip_id/foodItineraryItem",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        Trip.findById(req.params.trip_id).then(trip => {
+            // Check that the current user is part of this trip.
+            if (trip.users.includes(req.user.id)) {
+                const { errors, isValid } = validateItineraryItemInput(req.body);
+
+                if (!isValid) {
+                    return res.status(400).json(errors);
+                }
+
+                const newfoodItineraryItem = new FoodItineraryItem({
+                    trip: trip.id,
+                    itemName: req.body.itemName,
+                    category: req.body.category,
+                    address: req.body.address,
+                    description: req.body.description,
+                });
+
+                newfoodItineraryItem.save().then(FoodItineraryItem => {
+                    trip.foodItineraryItems.push(FoodItineraryItem.id);
+                    trip.save().then(() => res.json(FoodItineraryItem));
+                });
+            } else {
+                return res.status(401).json("Not the owner");
+            }
+        });
+    });
+
+// Delete a food itineraryItem, and remove it from a trip.
+router.delete("/foodItineraryItems/:id",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        FoodItineraryItem.findById(req.params.id)
+            .populate({ // Populate the trip to remove the itinerary item from it before deleteing it.
+                path: "trip",
+                model: "Trip",
+                select: ["foodItineraryItems", "users"]
+            })
+            .then(foodItineraryItem => {
+                // Check that the current user is part of the trip that is parent if this itinerary item.
+                if (foodItineraryItem.trip.users.includes(req.user.id)) {
+
+                    const trip = foodItineraryItem.trip;
+                    trip.foodItineraryItems.pull({ _id: foodItineraryItem.id })
+                    trip.save().then(() => {
+                        foodItineraryItem.remove().then(() => res.json(foodItineraryItem));
+                    });
+
+                } else {
+                    return res.status(401).json("Not the owner");
+                }
+            });
+    });
+
 // Add a user to a trip.
 router.post("/:trip_id/user",
     passport.authenticate("jwt", { session: false }),
     (req, res) => {
         Trip.findById(req.params.trip_id)
+            .populate({
+                path: "users",
+                model: "User",
+                select: ["username", "_id"]
+            })
             .then(trip => {
-                if (trip.users.includes(req.user.id)) {
+                // let currentTripUsers = trip.users
+
+                if (trip.users.some(user => (req.user.id === user.id))) {
 
                     if (!validText(req.body.email)) {
                         const errors = {};
@@ -263,17 +474,14 @@ router.post("/:trip_id/user",
                         if (!user) {
                             return res.status(401).json("User doesn't exist") 
                         }
-    
+
                         // Add the user only if they aren't already part of the trip.
                         if (!trip.users.includes(user.id))
-                            trip.users.push(user.id);
-
-                        trip.save().then(() => {
-                            return res.json("Success")
+                            trip.users.push({ _id: user.id, username: user.username });
+                            trip.save().then(() => {
+                            return res.json(trip.users)
                         });
-
                     });
-
                 } else {
                     return res.status(401).json("You don't have permission to invite");
                 }
@@ -285,21 +493,31 @@ router.delete("/:trip_id/user/:user_id",
     passport.authenticate("jwt", { session: false }),
     (req, res) => {
         Trip.findById(req.params.trip_id)
+        .populate({
+            path: "users",
+            model: "User",
+            select: ["username", "_id"]
+        })
         .then(trip => {
             // Check that the current user is the one being removed,
             // and that they are in this trip.
 
-            if (trip.users.includes(req.user.id)
-            && req.user.id === req.params.user_id) {
+            // if (trip.users.includes(req.user.id)
+            // && req.user.id === req.params.user_id) {
 
+            //     trip.users.pull({ _id: req.params.user_id })
+            //     trip.save().then(newTrip => res.json(newTrip));
+
+            //     // TODO: What if the trip is left empty? Without any users.
+
+            // } else {
+            //     return res.status(401).json("You can only remove yourself!");
+            //     // return res.status(401).json({errors: "You can only remove yourself!"});
+            // }
+
+            if (trip.users.some(user => (req.user.id === user.id))) {
                 trip.users.pull({ _id: req.params.user_id })
-                trip.save().then(newTrip => res.json(newTrip));
-
-                // TODO: What if the trip is left empty? Without any users.
-
-            } else {
-                return res.status(401).json("You can only remove yourself!");
-                // return res.status(401).json({errors: "You can only remove yourself!"});
+                trip.save().then(newTrip => res.json(newTrip.users));
             }
         });
     });
